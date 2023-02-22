@@ -35,16 +35,13 @@ if __name__ == '__main__':
         # for seed -3875250700933304645, plains only, creative
         build_area = Box((-357, 0, -248), (101, 256, 101))
 
-    center = build_area.center
-    center.y = 64
-    build_rect = build_area.toRect()
-
     print("Loading world slice...")
     world_slice = editor.loadWorldSlice(build_area.toRect())
     print("World slice loaded!")
 
     heightmap = world_slice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
-    cont_map = plane_detection.cont_planes(heightmap)
+    cont_planes = plane_detection.cont_planes(heightmap)
 
+    cont_map = plane_detection.cont_map(heightmap, cont_planes)
     plot_hm(cont_map, "cont_map.png")
     plot_hm(heightmap, "heightmap.png")

@@ -31,26 +31,35 @@ def sort_coords_by_height(heightmap: np.ndarray):
 
 def cont_planes(heightmap: np.ndarray):
     coords_with_height = sort_coords_by_height(heightmap)
-    continuous_fields: dict[tuple[int, ...],
-                            list[tuple[int, ...]]] = {}
+    cont_planes: dict[tuple[int, ...],
+                      list[tuple[int, ...]]] = {}
 
     for height, coords in coords_with_height.items():
+        print(f"Looking at height {height} -> coords {coords}")
         for ref_coord in coords:
-            print(f"Checking points continuous with {ref_coord}")
+            print(f"Checking points continuous with {ref_coord} "
+                  f"({height} high)")
             continuous = [ref_coord]
             coords_with_height[height].remove(ref_coord)
 
             for to_check in coords:
+                print(f"Checking all in {coords}")
+                print(f"Continuous: {continuous}")
                 for already_cont in continuous:
+                    print(f"Comparing {to_check} to {already_cont}")
                     if points_are_neighbours(to_check, already_cont):
                         continuous.append(to_check)
                         coords_with_height[height].remove(to_check)
 
-            continuous_fields[ref_coord] = continuous
+            cont_planes[ref_coord] = continuous
+    return cont_planes
 
+
+def cont_map(heightmap: np.ndarray,
+             cont_planes: dict[tuple[int, ...], list[tuple[int, ...]]]):
     cont_map = np.zeros(heightmap.shape)
-    for i, k in enumerate(continuous_fields):
-        for coord in continuous_fields[k]:
+    for i, k in enumerate(cont_planes):
+        for coord in cont_planes[k]:
             cont_map[coord[0], coord[1]] = i
 
     return cont_map
