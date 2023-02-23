@@ -35,23 +35,27 @@ def cont_planes(heightmap: np.ndarray):
                       list[tuple[int, ...]]] = {}
 
     for height, coords in coords_with_height.items():
-        print(f"Looking at height {height} -> coords {coords}")
+        print(f"Looking at height {height} with {len(coords)} coords")
+        already_checked = []
+
         for ref_coord in coords:
-            print(f"Checking points continuous with {ref_coord} "
-                  f"({height} high)")
-            continuous = [ref_coord]
-            coords_with_height[height].remove(ref_coord)
+            if ref_coord not in already_checked:
+                print(f"Checking {len(coords)} points for continuity with "
+                      f"{ref_coord} ({height} high)")
+                continuous = [ref_coord]
+                # coords.remove(ref_coord)
 
-            for to_check in coords:
-                print(f"Checking all in {coords}")
-                print(f"Continuous: {continuous}")
-                for already_cont in continuous:
-                    print(f"Comparing {to_check} to {already_cont}")
-                    if points_are_neighbours(to_check, already_cont):
-                        continuous.append(to_check)
-                        coords_with_height[height].remove(to_check)
+                for to_check in coords:
+                    # print(f"Checking all in {coords}")
+                    print(f"{len(continuous)} continuous points found",
+                          end='\r')
+                    for already_cont in continuous:
+                        # print(f"Comparing {to_check} to {already_cont}")
+                        if points_are_neighbours(to_check, already_cont):
+                            continuous.append(to_check)
+                            already_checked.append(to_check)
 
-            cont_planes[ref_coord] = continuous
+                cont_planes[ref_coord] = list(set(continuous))
     return cont_planes
 
 
