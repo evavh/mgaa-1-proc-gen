@@ -2,6 +2,8 @@ from collections import defaultdict
 
 import numpy as np
 
+from gdpc.vector_tools import addY  # type: ignore
+
 
 def points_are_neighbours(point1: tuple[int, ...], point2: tuple[int, ...]):
     if point1[0] == point2[0]:
@@ -17,21 +19,23 @@ def points_are_neighbours(point1: tuple[int, ...], point2: tuple[int, ...]):
             return False
 
 
-def sort_coords_by_height(heightmap: np.ndarray)\
+def sort_land_by_height(editor, heightmap: np.ndarray)\
         -> defaultdict[int, list[tuple[int, ...]]]:
     coords_with_height = defaultdict(list)
 
     for height in range(heightmap.min(), heightmap.max() + 1):
         for xz, y in np.ndenumerate(heightmap):
-            if y == height:
+            block_name = editor.getBlock(addY(xz, y - 1)).id
+            if y == height and "water" not in block_name:
                 coords_with_height[y].append(xz)
 
     return coords_with_height
 
 
-def cont_planes(heightmap: np.ndarray) -> dict[tuple[int, ...],
+def cont_planes(world_slice,
+                heightmap: np.ndarray) -> dict[tuple[int, ...],
                                                set[tuple[int, ...]]]:
-    coords_with_height = sort_coords_by_height(heightmap)
+    coords_with_height = sort_land_by_height(world_slice, heightmap)
     cont_planes = {}
 
     for height, coords in coords_with_height.items():
@@ -65,12 +69,33 @@ def cont_planes(heightmap: np.ndarray) -> dict[tuple[int, ...],
     return cont_planes
 
 
+def largest_plane(cont_planes: dict[tuple[int, ...],
+                                    set[tuple[int, ...]]]):
+    max_size = 0
+    largest: set[tuple[int, ...]] = set()
+
+    for ref_coord, points in cont_planes.items():
+        if len(points) > max_size:
+            max_size = len(points)
+            largest = points
+
+    return largest
+
+
 def cont_map(heightmap: np.ndarray,
-             cont_planes: dict[tuple[int, ...], list[tuple[int, ...]]])\
+             cont_planes: dict[tuple[int, ...], set[tuple[int, ...]]])\
         -> np.ndarray:
-    cont_map = np.zeros(heightmap.shape)
+    cont_map = np.full(heightmap.shape, -10)
     for i, k in enumerate(cont_planes):
         for coord in cont_planes[k]:
             cont_map[coord[0], coord[1]] = i
 
     return cont_map
+
+
+def plane_map(heightmap: np.ndarray, plane: set[tuple[int, ...]]):
+    plane_map = np.full(heightmap.shape, -10)
+    for (x, z) in plane:
+        plane_map[x][z] = 10
+
+    return plane_map

@@ -40,8 +40,13 @@ if __name__ == '__main__':
     print("World slice loaded!")
 
     heightmap = world_slice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
-    cont_planes = plane_detection.cont_planes(heightmap)
 
+    cont_planes = plane_detection.cont_planes(world_slice, heightmap)
     cont_map = plane_detection.cont_map(heightmap, cont_planes)
+
+    largest_plane = plane_detection.largest_plane(cont_planes)
+    plane_map = plane_detection.plane_map(heightmap, largest_plane)
+
     plot_hm(cont_map, "cont_map.png")
     plot_hm(heightmap, "heightmap.png")
+    plot_hm(plane_map, "plane_map.png")
