@@ -10,6 +10,8 @@ from gdpc.exceptions import (  # type: ignore
     InterfaceConnectionError, BuildAreaNotSetError)
 
 import plane_detection
+import rectangle_gen
+import building
 
 
 def plot_hm(heightmap: np.ndarray, filename: str):
@@ -45,8 +47,14 @@ if __name__ == '__main__':
     cont_map = plane_detection.cont_map(heightmap, cont_planes)
 
     largest_plane = plane_detection.largest_plane(cont_planes)
+    plane_height = plane_detection.plane_height(largest_plane, heightmap)
     plane_map = plane_detection.plane_map(heightmap, largest_plane)
 
     plot_hm(cont_map, "cont_map.png")
     plot_hm(heightmap, "heightmap.png")
     plot_hm(plane_map, "plane_map.png")
+
+    rect = rectangle_gen.choose_rectangle(largest_plane)
+    print(build_area.offset, type(build_area.offset))
+    print(rect.offset, type(rect.offset))
+    building.build_room(editor, build_area.offset, rect, plane_height)

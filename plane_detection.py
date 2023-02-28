@@ -44,8 +44,8 @@ def cont_planes(world_slice,
 
         for ref_coord in coords:
             if ref_coord not in already_checked:
-                print(f"Checking {len(coords)} points for continuity with "
-                      f"{ref_coord} ({height} high)")
+                # print(f"Checking {len(coords)} points for continuity with "
+                #      f"{ref_coord} ({height} high)")
                 continuous = {ref_coord}
                 old_continuous: set[tuple[int, ...]] = set()
                 new_continuous = continuous.copy()
@@ -54,8 +54,8 @@ def cont_planes(world_slice,
                 while len(new_continuous) != 0:
                     for to_check in coords:
                         # print(f"Checking all in {coords}")
-                        print(f"{len(continuous)} continuous points found",
-                              end='\r')
+                        # print(f"{len(continuous)} continuous points found",
+                        #       end='\r')
                         for already_cont in new_continuous:
                             # print(f"Comparing {to_check} to {already_cont}")
                             if points_are_neighbours(to_check, already_cont):
@@ -70,7 +70,7 @@ def cont_planes(world_slice,
 
 
 def largest_plane(cont_planes: dict[tuple[int, ...],
-                                    set[tuple[int, ...]]]):
+                            set[tuple[int, ...]]]):
     max_size = 0
     largest: set[tuple[int, ...]] = set()
 
@@ -99,3 +99,10 @@ def plane_map(heightmap: np.ndarray, plane: set[tuple[int, ...]]):
         plane_map[x][z] = 10
 
     return plane_map
+
+
+def plane_height(plane, heightmap):
+    a_point = list(plane)[0]
+    plane_height = heightmap[a_point[0]][a_point[1]]
+
+    return plane_height
