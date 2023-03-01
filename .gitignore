@@ -1,3 +1,5 @@
 plots/
 *.pdf
 __pycache__/
+**/*.aux
+**/*.log
