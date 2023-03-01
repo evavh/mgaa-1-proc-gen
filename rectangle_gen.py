@@ -1,13 +1,15 @@
 import random
+from typing import Optional
 
 from gdpc.vector_tools import Rect  # type: ignore
 
 
 def random_rectangles(points: set[tuple[int, ...]],
                       size: tuple[int, int]) -> list[Rect]:
-    random.shuffle(list(points))
-    rectangles = [Rect((0, 0), (1, 1))] * (len(points) * 2)
-    for i, offset in enumerate(points):
+    offsets = random.sample(points, k=len(points))
+    random.shuffle(list(offsets))
+    rectangles = [Rect((0, 0), (1, 1))] * (len(offsets) * 2)
+    for i, offset in enumerate(offsets):
         rectangles[2 * i] = Rect(offset, size)
         rectangles[2 * i + 1] = Rect(offset, (size[1], size[0]))
 
@@ -27,10 +29,11 @@ def is_rect_in_plane(rect: Rect, plane: set[tuple[int, ...]],
 
 
 def choose_rectangle(plane: set[tuple[int, ...]],
-                     size: tuple[int, int]) -> Rect:
+                     size: tuple[int, int], margin: int) -> Optional[Rect]:
     rects = random_rectangles(plane, size)
+
     for rect in rects:
-        if is_rect_in_plane(rect, plane, margin=1):
+        if is_rect_in_plane(rect, plane, margin):
             return rect
 
-    raise Exception(f"No valid rectangle of size {size} found")
+    return None

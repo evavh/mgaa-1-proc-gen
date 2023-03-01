@@ -54,5 +54,4 @@ if __name__ == '__main__':
     plot_hm(heightmap, "heightmap.png")
     plot_hm(plane_map, "plane_map.png")
 
-    main_rect = rectangle_gen.choose_rectangle(largest_plane, (8, 12))
-    building.build_room(editor, build_area.offset, main_rect, plane_height)
+    building.build_house(editor, build_area, largest_plane, plane_height)
