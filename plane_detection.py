@@ -39,25 +39,19 @@ def cont_planes(world_slice,
     cont_planes = {}
 
     for height, coords in coords_with_height.items():
-        print(f"Looking at height {height} with {len(coords)} coords")
+        print(f"Finding planes at height {height}, "
+              f"checking {len(coords)} points")
         already_checked: set[tuple[int, ...]] = set()
 
         for ref_coord in coords:
             if ref_coord not in already_checked:
-                # print(f"Checking {len(coords)} points for continuity with "
-                #      f"{ref_coord} ({height} high)")
                 continuous = {ref_coord}
                 old_continuous: set[tuple[int, ...]] = set()
                 new_continuous = continuous.copy()
-                # coords.remove(ref_coord)
 
                 while len(new_continuous) != 0:
                     for to_check in coords:
-                        # print(f"Checking all in {coords}")
-                        # print(f"{len(continuous)} continuous points found",
-                        #       end='\r')
                         for already_cont in new_continuous:
-                            # print(f"Comparing {to_check} to {already_cont}")
                             if points_are_neighbours(to_check, already_cont):
                                 continuous.add(to_check)
                                 already_checked.add(to_check)
@@ -70,7 +64,7 @@ def cont_planes(world_slice,
 
 
 def largest_plane(cont_planes: dict[tuple[int, ...],
-                            set[tuple[int, ...]]]):
+                                    set[tuple[int, ...]]]):
     max_size = 0
     largest: set[tuple[int, ...]] = set()
 
