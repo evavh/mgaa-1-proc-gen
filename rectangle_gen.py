@@ -3,21 +3,23 @@ import random
 from gdpc.vector_tools import Rect  # type: ignore
 
 
-def random_rectangle(points: set[tuple[int, ...]],
-                     size_range: tuple[int, int]) -> Rect:
-    x_size = random.randint(size_range[0], size_range[1])
-    z_size = random.randint(size_range[0], size_range[1])
+def random_rectangles(points: set[tuple[int, ...]],
+                      size: tuple[int, int]) -> list[Rect]:
+    random.shuffle(list(points))
+    rectangles = [Rect((0, 0), (1, 1))] * (len(points) * 2)
+    for i, offset in enumerate(points):
+        rectangles[2 * i] = Rect(offset, size)
+        rectangles[2 * i + 1] = Rect(offset, (size[1], size[0]))
 
-    offset = random.choice(list(points))
-
-    return Rect(offset, (x_size, z_size))
+    return rectangles
 
 
 def is_rect_in_plane(rect: Rect, plane: set[tuple[int, ...]],
                      margin: int) -> bool:
-    rect.offset -= (margin, margin)
-    rect.size += (margin*2, margin*2)
-    for point in rect.inner:
+    offset = rect.offset - (margin, margin)
+    size = rect.size + (margin*2, margin*2)
+    to_try = Rect(offset, size)
+    for point in to_try.inner:
         if tuple(point) not in plane:
             return False
 
@@ -25,11 +27,10 @@ def is_rect_in_plane(rect: Rect, plane: set[tuple[int, ...]],
 
 
 def choose_rectangle(plane: set[tuple[int, ...]],
-                     size_range: tuple[int, int]) -> Rect:
-    rect = random_rectangle(plane, size_range)
-    print(f"Generated rectangle {rect}")
-    while not is_rect_in_plane(rect, plane, margin=1):
-        rect = random_rectangle(plane, size_range)
-        print(f"Generated rectangle {rect}")
+                     size: tuple[int, int]) -> Rect:
+    rects = random_rectangles(plane, size)
+    for rect in rects:
+        if is_rect_in_plane(rect, plane, margin=1):
+            return rect
 
-    return rect
+    raise Exception(f"No valid rectangle of size {size} found")
