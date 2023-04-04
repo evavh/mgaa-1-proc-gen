@@ -33,9 +33,11 @@ if __name__ == '__main__':
 
     try:
         build_area = editor.getBuildArea()
+        print(f"Build area set to {build_area}")
     except BuildAreaNotSetError:
         # for seed -3875250700933304645, plains only, creative
         build_area = Box((-357, 0, -248), (101, 256, 101))
+        print(f"Build area set to default: {build_area}")
 
     print("Loading world slice...")
     world_slice = editor.loadWorldSlice(build_area.toRect())
