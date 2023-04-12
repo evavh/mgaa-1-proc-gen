@@ -89,13 +89,11 @@ def get_house_rect(main_rect_global: Rect, facing_dirs: list[str]) -> Rect:
     return house_rect
 
 
-def place_log_outline(editor: Editor, main_rect_global: Rect,
+def place_log_outline(editor: Editor, house_rect: Rect,
                       facing_dirs: list[str],
                       y: int):
     BLOCK_TYPE = "minecraft:spruce_log"
 
-    house_rect = get_house_rect(main_rect_global, facing_dirs)
-    house_rect.size -= (1, 1)
     x_min, x_max, z_min, z_max = get_corners(house_rect)
 
     # z_min to z_max logs
@@ -114,9 +112,35 @@ def place_log_outline(editor: Editor, main_rect_global: Rect,
         editor.placeBlockGlobal(addY(corner, y), block)
 
 
+def place_windows(editor: Editor, house_rect: Rect,
+                  y: int):
+    BLOCK_TYPE = "minecraft:glass_pane"
+    block = Block(BLOCK_TYPE)
+
+    x_min, x_max, z_min, z_max = get_corners(house_rect)
+    half_dx = (x_max - x_min) // 2 + 1
+    half_dz = (z_max - z_min) // 2 + 1
+
+    for x in range(x_min + 2, x_min + half_dx, 2):
+        editor.placeBlockGlobal((x, y, z_min), block)
+        editor.placeBlockGlobal((x, y, z_max), block)
+
+    for x in range(x_max - 2, x_max - half_dx, -2):
+        editor.placeBlockGlobal((x, y, z_min), block)
+        editor.placeBlockGlobal((x, y, z_max), block)
+
+    for z in range(z_min + 2, z_min + half_dz, 2):
+        editor.placeBlockGlobal((x_min, y, z), block)
+        editor.placeBlockGlobal((x_max, y, z), block)
+
+    for z in range(z_max - 2, z_max - half_dz, -2):
+        editor.placeBlockGlobal((x_min, y, z), block)
+        editor.placeBlockGlobal((x_max, y, z), block)
+
+
 def add_to_facing_dirs(facing_dirs):
     if len(facing_dirs) == 0:
-        facing_dirs=['south', 'west']
+        facing_dirs = ['south', 'west']
     elif len(facing_dirs) == 1:
         if facing_dirs[0] == 'south':
             facing_dirs[1] == 'west'
@@ -128,34 +152,41 @@ def add_to_facing_dirs(facing_dirs):
     return facing_dirs
 
 
-def build_house(editor: Editor, build_area, largest_plane, y):
-    IDEAL_SIZE=(10, 8)
-    MARGIN=1
+def build_house(editor: Editor, build_area, largest_plane, y_floor):
+    IDEAL_SIZE = (10, 8)
+    MARGIN = 1
 
-    last_dim_decreased=1
-    main_rect=None
-    size=(IDEAL_SIZE[0] + 1, IDEAL_SIZE[1])
+    last_dim_decreased = 1
+    main_rect = None
+    size = (IDEAL_SIZE[0] + 1, IDEAL_SIZE[1])
 
     while main_rect is None:
-        size, last_dim_decreased=decrease_size(size, last_dim_decreased)
+        size, last_dim_decreased = decrease_size(size, last_dim_decreased)
         print(f"Trying to find fitting {size} rectangle")
-        main_rect=rectangle_gen.choose_rectangle(largest_plane, size, MARGIN)
+        main_rect = rectangle_gen.choose_rectangle(largest_plane, size, MARGIN)
 
-    main_rect_global=Rect(main_rect.offset, main_rect.size)
+    main_rect_global = Rect(main_rect.offset, main_rect.size)
     main_rect_global.offset += (build_area.offset.x, build_area.offset.z)
 
-    facing_dirs=getOptimalFacingDirection(editor,
-                                            addY(main_rect_global.center, y+1))
-    facing_dirs=add_to_facing_dirs(facing_dirs)
+    facing_dirs = getOptimalFacingDirection(editor,
+                                            addY(main_rect_global.center, y_floor+1))
+    facing_dirs = add_to_facing_dirs(facing_dirs)
 
     print(f"Placing foundation at {main_rect_global}")
-    placeRect(editor, main_rect_global, y,
+    placeRect(editor, main_rect_global, y_floor,
               Block("minecraft:dark_oak_planks"))
 
     print(f"House should be facing {facing_dirs}")
 
-    place_fence(editor, main_rect_global, facing_dirs[0], y)
-    place_fence(editor, main_rect_global, facing_dirs[1], y)
+    place_fence(editor, main_rect_global, facing_dirs[0], y_floor)
+    place_fence(editor, main_rect_global, facing_dirs[1], y_floor)
 
-    for y in range(y + 1, y + 4):
-        place_log_outline(editor, main_rect_global, facing_dirs, y)
+    house_rect = get_house_rect(main_rect_global, facing_dirs)
+    # working with inclusive coordinates
+    house_rect.size -= (1, 1)
+
+    for y in range(y_floor + 1, y_floor + 4):
+        place_log_outline(editor, house_rect, facing_dirs, y)
+
+    for y in range(y_floor + 2, y_floor + 4):
+        place_windows(editor, house_rect, y)
