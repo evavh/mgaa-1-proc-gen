@@ -1,3 +1,5 @@
+import random
+
 from gdpc import Block  # type: ignore
 from gdpc.editor import Editor  # type: ignore
 from gdpc.geometry import placeRectOutline, placeRect, placeLine  # type: ignore
@@ -7,11 +9,11 @@ from gdpc.editor_tools import getOptimalFacingDirection  # type: ignore
 
 import rectangle_gen
 
-
-def build_room(editor: Editor, build_offset, rect: Rect, y: int):
-    rect.offset += (build_offset.x, build_offset.z)
-    print(f"Placing outline at {rect}, height {y}")
-    placeRectOutline(editor, rect, y, Block("minecraft:oak_planks"))
+FLOOR_BLOCK = "minecraft:dark_oak_planks"
+FENCE_BLOCK = "minecraft:dark_oak_fence"
+WALL_BLOCK = "minecraft:spruce_log"
+WINDOW_BLOCK = "minecraft:glass_pane"
+DOOR_BLOCK = "minecraft:birch_door"
 
 
 def decrease_size(size: tuple[int, int], last_dim_decreased: int):
@@ -40,7 +42,7 @@ def get_corners(rect: Rect):
 
 def place_fence(editor: Editor, rect_global: Rect, dir: str, y: int):
     x_min, x_max, z_min, z_max = get_corners(rect_global)
-    block = Block("minecraft:dark_oak_fence")
+    block = Block(FENCE_BLOCK)
 
     print(f"Placing {dir} fence at {get_corners(rect_global)} {y + 1}")
 
@@ -90,32 +92,29 @@ def get_house_rect(main_rect_global: Rect, facing_dirs: list[str]) -> Rect:
 
 
 def place_log_outline(editor: Editor, house_rect: Rect,
-                      facing_dirs: list[str],
                       y: int):
-    BLOCK_TYPE = "minecraft:spruce_log"
 
     x_min, x_max, z_min, z_max = get_corners(house_rect)
 
     # z_min to z_max logs
-    block = Block(BLOCK_TYPE, {"axis": "z"})
+    block = Block(WALL_BLOCK, {"axis": "z"})
     placeLine(editor, (x_min, y, z_min), (x_min, y, z_max), block)
     placeLine(editor, (x_max, y, z_min), (x_max, y, z_max), block)
 
     # x_min to x_max logs
-    block = Block(BLOCK_TYPE, {"axis": "x"})
+    block = Block(WALL_BLOCK, {"axis": "x"})
     placeLine(editor, (x_min, y, z_min), (x_max, y, z_min), block)
     placeLine(editor, (x_min, y, z_max), (x_max, y, z_max), block)
 
     # corners
-    block = Block(BLOCK_TYPE, {"axis": "y"})
+    block = Block(WALL_BLOCK, {"axis": "y"})
     for corner in house_rect.corners:
         editor.placeBlockGlobal(addY(corner, y), block)
 
 
 def place_windows(editor: Editor, house_rect: Rect,
                   y: int):
-    BLOCK_TYPE = "minecraft:glass_pane"
-    block = Block(BLOCK_TYPE)
+    block = Block(WINDOW_BLOCK)
 
     x_min, x_max, z_min, z_max = get_corners(house_rect)
     half_dx = (x_max - x_min) // 2 + 1
@@ -138,16 +137,64 @@ def place_windows(editor: Editor, house_rect: Rect,
         editor.placeBlockGlobal((x_max, y, z), block)
 
 
+def place_door(editor: Editor, house_rect: Rect, facing_dirs: list[str],
+               y: int) -> bool:
+    secondary_dir = facing_dirs[1]
+
+    x_min, x_max, z_min, z_max = get_corners(house_rect)
+    half_dx = (x_max - x_min) // 2
+    half_dz = (z_max - z_min) // 2
+
+    print(f"Trying to place door on dir {secondary_dir}")
+    if secondary_dir == 'south' or secondary_dir == 'north':
+        # line from x_min to x_max at z_max or z_min
+        x_options = list(range(x_min + 2, x_min + half_dx, 2))
+        x_options.extend(list(range(x_max - 2, x_max - half_dx, 2)))
+
+        wall_block = Block(WALL_BLOCK, {"axis": "x"})
+    elif secondary_dir == 'east' or secondary_dir == 'west':
+        # line from z_min to z_max at x_max or x_min
+        z_options = list(range(z_min + 2, z_min + half_dz, 2))
+        z_options.extend(list(range(z_max - 2, z_max - half_dz, 2)))
+
+        wall_block = Block(WALL_BLOCK, {"axis": "z"})
+
+    if secondary_dir == 'south':
+        z_options = [z_max]
+        door_block = Block(DOOR_BLOCK, {"facing": 'north'})
+    if secondary_dir == 'north':
+        z_options = [z_min]
+        door_block = Block(DOOR_BLOCK, {"facing": 'south'})
+    if secondary_dir == 'east':
+        x_options = [x_max]
+        door_block = Block(DOOR_BLOCK, {"facing": 'west'})
+    if secondary_dir == 'west':
+        x_options = [x_min]
+        door_block = Block(DOOR_BLOCK, {"facing": 'east'})
+
+    print(f"x_options: {x_options}, z_options: {z_options}")
+    if len(x_options) == 0 or len(z_options) == 0:
+        return False
+
+    x = random.choice(x_options)
+    z = random.choice(z_options)
+    print(f"Placing door at {(x, y + 1, z)}")
+    editor.placeBlockGlobal((x, y + 3, z), wall_block)
+    editor.placeBlockGlobal((x, y + 1, z), door_block)
+
+    return True
+
+
 def add_to_facing_dirs(facing_dirs):
     if len(facing_dirs) == 0:
         facing_dirs = ['south', 'west']
     elif len(facing_dirs) == 1:
         if facing_dirs[0] == 'south':
-            facing_dirs[1] == 'west'
+            facing_dirs.append('west')
         elif facing_dirs[0] == 'north':
-            facing_dirs[1] == 'west'
+            facing_dirs.append('west')
         else:
-            facing_dirs[1] == 'south'
+            facing_dirs.append('south')
 
     return facing_dirs
 
@@ -174,7 +221,7 @@ def build_house(editor: Editor, build_area, largest_plane, y_floor):
 
     print(f"Placing foundation at {main_rect_global}")
     placeRect(editor, main_rect_global, y_floor,
-              Block("minecraft:dark_oak_planks"))
+              Block(FLOOR_BLOCK))
 
     print(f"House should be facing {facing_dirs}")
 
@@ -186,7 +233,12 @@ def build_house(editor: Editor, build_area, largest_plane, y_floor):
     house_rect.size -= (1, 1)
 
     for y in range(y_floor + 1, y_floor + 4):
-        place_log_outline(editor, house_rect, facing_dirs, y)
+        place_log_outline(editor, house_rect, y)
 
     for y in range(y_floor + 2, y_floor + 4):
         place_windows(editor, house_rect, y)
+
+    if not place_door(editor, house_rect, facing_dirs, y_floor):
+        facing_dirs2 = facing_dirs.copy()
+        facing_dirs2[1] = facing_dirs[0]
+        place_door(editor, house_rect, facing_dirs2, y_floor)
