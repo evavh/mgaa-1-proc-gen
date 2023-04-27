@@ -5,6 +5,7 @@ from gdpc.editor import Editor  # type: ignore
 from gdpc.geometry import placeRectOutline, placeRect, placeLine  # type: ignore
 from gdpc.vector_tools import Rect, addY  # type: ignore
 from gdpc.editor_tools import getOptimalFacingDirection  # type: ignore
+from glm import ivec3
 
 
 import rectangle_gen
@@ -14,6 +15,8 @@ FENCE_BLOCK = "minecraft:dark_oak_fence"
 WALL_BLOCK = "minecraft:spruce_log"
 WINDOW_BLOCK = "minecraft:glass_pane"
 DOOR_BLOCK = "minecraft:birch_door"
+GATE_BLOCK = "minecraft:dark_oak_fence_gate"
+STAIRS_BLOCK = "minecraft:dark_oak_stairs"
 
 
 def decrease_size(size: tuple[int, int], last_dim_decreased: int):
@@ -161,16 +164,22 @@ def place_door(editor: Editor, house_rect: Rect, facing_dirs: list[str],
 
     if secondary_dir == 'south':
         z_options = [z_max]
-        door_block = Block(DOOR_BLOCK, {"facing": 'north'})
+        facing = 'north'
+        gate_offset = ivec3(0, 0, 2)
     if secondary_dir == 'north':
         z_options = [z_min]
-        door_block = Block(DOOR_BLOCK, {"facing": 'south'})
+        facing = 'south'
+        gate_offset = ivec3(0, 0, -2)
     if secondary_dir == 'east':
         x_options = [x_max]
-        door_block = Block(DOOR_BLOCK, {"facing": 'west'})
+        facing = 'west'
+        gate_offset = ivec3(2, 0, 0)
     if secondary_dir == 'west':
         x_options = [x_min]
-        door_block = Block(DOOR_BLOCK, {"facing": 'east'})
+        facing = 'east'
+        gate_offset = ivec3(-2, 0, 0)
+
+    door_block = Block(DOOR_BLOCK, {"facing": facing})
 
     print(f"x_options: {x_options}, z_options: {z_options}")
     if len(x_options) == 0 or len(z_options) == 0:
@@ -178,9 +187,19 @@ def place_door(editor: Editor, house_rect: Rect, facing_dirs: list[str],
 
     x = random.choice(x_options)
     z = random.choice(z_options)
-    print(f"Placing door at {(x, y + 1, z)}")
-    editor.placeBlockGlobal((x, y + 3, z), wall_block)
-    editor.placeBlockGlobal((x, y + 1, z), door_block)
+    door_coords = ivec3(x, y + 1, z)
+    print(f"Placing door at {door_coords}")
+    print(door_coords + ivec3(0, 2, 0))
+    editor.placeBlockGlobal(door_coords + ivec3(0, 2, 0), wall_block)
+    editor.placeBlockGlobal(door_coords, door_block)
+
+    gate_coords = door_coords + gate_offset
+    stairs_coords = gate_coords + ivec3(0, -1, 0)
+
+    gate_block = Block(GATE_BLOCK, {"facing": facing})
+    stairs_block = Block(STAIRS_BLOCK, {"facing": facing})
+    editor.placeBlockGlobal(gate_coords, gate_block)
+    editor.placeBlockGlobal(stairs_coords, stairs_block)
 
     return True
 
@@ -200,7 +219,7 @@ def add_to_facing_dirs(facing_dirs):
 
 
 def build_house(editor: Editor, build_area, largest_plane, y_floor):
-    IDEAL_SIZE = (10, 8)
+    IDEAL_SIZE = (12, 10)
     MARGIN = 1
 
     last_dim_decreased = 1
