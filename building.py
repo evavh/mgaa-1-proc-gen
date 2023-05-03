@@ -5,7 +5,7 @@ from gdpc.editor import Editor  # type: ignore
 from gdpc.geometry import placeRectOutline, placeRect, placeLine  # type: ignore
 from gdpc.vector_tools import Rect, addY  # type: ignore
 from gdpc.editor_tools import getOptimalFacingDirection  # type: ignore
-from glm import ivec3
+from glm import ivec2, ivec3
 
 
 import rectangle_gen
@@ -204,6 +204,105 @@ def place_door(editor: Editor, house_rect: Rect, facing_dirs: list[str],
     return True
 
 
+def opposite_of_dir(dir):
+    if dir == 'north':
+        return 'south'
+    if dir == 'east':
+        return 'west'
+    if dir == 'west':
+        return 'east'
+    if dir == 'south':
+        return 'north'
+
+
+def build_roof(editor, house_rect, y_floor):
+    # Roof
+    # get short side line
+    # iterate over it, placing logs one less wide on each side
+    # (for both short sides)
+    # until 2 (even) or 3 (odd) wide
+
+    x_min, x_max, z_min, z_max = get_corners(house_rect)
+
+    x_lines = [[ivec2(x_min, z_min), ivec2(x_max, z_min)], [
+        ivec2(x_min, z_max), ivec2(x_max, z_max)]]
+    z_lines = [[ivec2(x_min, z_min), ivec2(x_min, z_max)], [
+        ivec2(x_max, z_min), ivec2(x_max, z_max)]]
+
+    x_lines_long = [[ivec2(x_min - 1, z_min), ivec2(x_max + 1, z_min)], [
+        ivec2(x_min - 1, z_max), ivec2(x_max + 1, z_max)]]
+    z_lines_long = [[ivec2(x_min, z_min - 1), ivec2(x_min, z_max + 1)], [
+        ivec2(x_max, z_min - 1), ivec2(x_max, z_max + 1)]]
+
+    if house_rect.size[0] < house_rect.size[1]:
+        dir = 'east'
+        axis = 'x'
+        short_lines = x_lines
+        long_lines = z_lines_long
+        roof_width = x_max - x_min
+        reduction_step = ivec3(1, 0, 0)
+        cur_width_red = ivec3(1, 0, 0)
+        cur_length_red = ivec3(-1, 0, 0)
+    if house_rect.size[0] >= house_rect.size[1]:
+        dir = 'north'
+        axis = 'z'
+        short_lines = z_lines
+        long_lines = x_lines_long
+        roof_width = z_max - z_min
+        reduction_step = ivec3(0, 0, 1)
+        cur_width_red = ivec3(0, 0, 1)
+        cur_length_red = ivec3(0, 0, -1)
+
+    roof_wall_block = Block(WALL_BLOCK, {"axis": axis})
+
+    y_roof = y_floor + 5
+    roof_height = roof_width // 2 - 2
+    if roof_height < 2:
+        roof_height = 2
+
+    for cur_y in range(y_roof, y_roof + roof_height):
+        for line in short_lines:
+            placeLine(editor,
+                      addY(line[0], cur_y) + cur_width_red,
+                      addY(line[1], cur_y) - cur_width_red,
+                      roof_wall_block)
+        cur_width_red += reduction_step
+
+    # iterate over short side width + y, starting at y_floor + 5
+    # place line of stairs, first birch then dark oak until at y of top
+    # place oak blocks at same level as top stairs
+    for cur_y in range(y_roof - 1, y_roof + roof_height + 1):
+        # first line: toward z_max
+        line = long_lines[0]
+        roof_block = Block(STAIRS_BLOCK, {"facing": opposite_of_dir(dir)})
+        placeLine(editor,
+                  addY(line[0], cur_y) + cur_length_red,
+                  addY(line[1], cur_y) + cur_length_red,
+                  roof_block)
+
+        # second line: toward z_min
+        line = long_lines[1]
+        roof_block = Block(STAIRS_BLOCK, {"facing": dir})
+        placeLine(editor,
+                  addY(line[0], cur_y) - cur_length_red,
+                  addY(line[1], cur_y) - cur_length_red,
+                  roof_block)
+
+        cur_length_red += reduction_step
+
+    ceiling_block = Block(FLOOR_BLOCK)
+
+    placeLine(editor,
+              addY(long_lines[0][0], y_roof + roof_height) + cur_length_red,
+              addY(long_lines[0][1], y_roof + roof_height) + cur_length_red,
+              ceiling_block)
+
+    placeLine(editor,
+              addY(long_lines[1][0], y_roof + roof_height) - cur_length_red,
+              addY(long_lines[1][1], y_roof + roof_height) - cur_length_red,
+              ceiling_block)
+
+
 def add_to_facing_dirs(facing_dirs):
     if len(facing_dirs) == 0:
         facing_dirs = ['south', 'west']
@@ -262,61 +361,4 @@ def build_house(editor: Editor, build_area, largest_plane, y_floor):
         facing_dirs2[1] = facing_dirs[0]
         place_door(editor, house_rect, facing_dirs2, y_floor)
 
-    # Roof
-    # get short side line
-    # iterate over it, placing logs one less wide on each side
-    # (for both short sides)
-    # until 2 (even) or 3 (odd) wide
-
-    x_min, x_max, z_min, z_max = get_corners(house_rect)
-
-    x_lines = [[(x_min, z_min), (x_max, z_min)], [
-        (x_min, z_max), (x_max, z_max)]]
-    z_lines = [[(x_min, z_min), (x_min, z_max)], [
-        (x_max, z_min), (x_max, z_max)]]
-
-    if house_rect.size[0] < house_rect.size[1]:
-        dir = 'east'
-        axis = 'x'
-        short_lines = x_lines
-        long_lines = z_lines
-        roof_width = x_max - x_min
-        width_reduction_step = ivec3(1, 0, 0)
-        length_reduction_step = ivec3(0, 0, 1)
-    if house_rect.size[0] >= house_rect.size[1]:
-        dir = 'north'
-        axis = 'z'
-        short_lines = z_lines
-        long_lines = x_lines
-        roof_width = z_max - z_min
-        width_reduction_step = ivec3(0, 0, 1)
-        length_reduction_step = ivec3(1, 0, 0)
-
-    roof_wall_block = Block(WALL_BLOCK, {"axis": axis})
-    roof_block = Block(STAIRS_BLOCK, {"facing": dir})
-
-    y_roof = y_floor + 5
-    roof_height = roof_width // 2 - 2
-    if roof_height < 2:
-        roof_height = 2
-    cur_width_red = width_reduction_step
-
-    for cur_y in range(y_roof, y_roof + roof_height + 1):
-        for line in short_lines:
-            placeLine(editor,
-                      addY(line[0], cur_y) + cur_width_red,
-                      addY(line[1], cur_y) - cur_width_red, roof_wall_block)
-        cur_width_red += width_reduction_step
-
-    # iterate over short side width + y, starting at y_floor + 5
-    # place line of stairs, first birch then dark oak until at y of top
-    # place oak blocks at same level as top stairs
-    cur_length_red = length_reduction_step
-
-    for cur_y in range(y_roof, y_roof + roof_height + 1):
-        for line in long_lines:
-            placeLine(editor,
-                      addY(line[0], cur_y) + cur_length_red,
-                      addY(line[1], cur_y) - cur_length_red,
-                      roof_block)
-        cur_length_red += length_reduction_step
+    build_roof(editor, house_rect, y_floor)
