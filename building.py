@@ -317,6 +317,18 @@ def add_to_facing_dirs(facing_dirs):
     return facing_dirs
 
 
+def build_interior(editor, house_rect, y_floor):
+    print(house_rect)
+
+    editor.placeBlockGlobal(
+        addY(house_rect.offset + (1, 2), y_floor+1), Block("minecraft:green_bed"))
+    editor.placeBlockGlobal(
+        addY(house_rect.offset + (2, 1), y_floor+1), Block("minecraft:torch"))
+    editor.placeBlockGlobal(
+        addY(house_rect.offset + house_rect.size - (1, 1), y_floor+1),
+        Block("minecraft:bookshelf"))
+
+
 def build_house(editor: Editor, build_area, largest_plane, y_floor):
     IDEAL_SIZE = (12, 10)
     MARGIN = 1
@@ -362,3 +374,4 @@ def build_house(editor: Editor, build_area, largest_plane, y_floor):
         place_door(editor, house_rect, facing_dirs2, y_floor)
 
     build_roof(editor, house_rect, y_floor)
+    build_interior(editor, house_rect, y_floor)
