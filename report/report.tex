@@ -5,6 +5,7 @@
 \usepackage[english]{babel}
 \usepackage[en-GB]{datetime2}
 \usepackage[margin=3.5cm]{geometry}
+\usepackage{graphicx}
 \parindent=0pt
 \frenchspacing
 
@@ -25,22 +26,73 @@
 \maketitle
 
 \section{Introduction}
-For this assignment...
+For this assignment we are studying procedural content generation. We will be automatically generating a house in Minecraft, using the GDPC Python package and the GDMC (Generative Design in Minecraft Challenge) HTTP interface mod. This mod was created for a contest where people procedurally generate settlements in Minecraft, in a specified building area. The challenge here, which we will explore in this assignment as well, is to adapt the generated structures to the world that is given to you, while also varying what is generated. %TODO: references
 
-\section{Finding a build area}
-Describe plane finding algorithm
+\section{Implementation}
+Our implementation consists of two main parts: finding a suitable part of the given build area to build in, and actually constructing the house.
+\subsection{Finding a build area}
+To find a suitable building area, we have written an algorithm that finds all the continuous, flat planes inside the larger area. To accomplish this, we take the following steps:
+\begin{itemize}
+    \item Take the heightmap that GDPC generates for us
+    \item Sort every coordinate point in this heightmap matrix by height
+    \item Within every height category, generate a set of continuous points
+          \begin{itemize}
+              \item Choose a reference coordinate
+              \item Check for each point whether it is a neighbour of the reference point, or previously found neighbours of the reference points
+              \item Add the neighbours to the set of continuous points
+              \item When there are no more new continuous points, we are done
+          \end{itemize}
+\end{itemize}
 
+The result can be seen in figures~\ref{fig:heightmap},~\ref{fig:cont_map},~and~\ref{fig:plane_map}. Firstly, figure~\ref{fig:heightmap} shows the height map, generated directly from the terrain by GDPC. Figure~\ref{fig:cont_map} shows the result of our algorithm. The difference with the height map is subtle, as there are many different plains, but we can easily see that there are more colour levels in this plot than in the height map. This means the algorithm has subdivided the height levels into their continuous parts. Finally, figure~\ref{fig:plane_map} shows the largest plane we have found, that is the plane with the largest surface area, in yellow. We will be working with this plane to build our house on.
 
-\section{Architectural style}
-https://woodmasters.com.ua/wp-content/uploads/2015/01/1392040471-848x480.jpg
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{../plots/heightmap.png}
+    \centering
+    \caption{A height map of a piece of Minecraft terrain. The colours represent the block height, as defined by the scale on the right of the figure.}
+    \label{fig:heightmap}
+\end{figure}
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{../plots/cont_map.png}
+    \centering
+	\caption{The heat map of continuous planes, generated from the height map in figure~\ref{fig:heightmap}. The colour scale here does not have a special meaning, but simply numbers all the planes that were found.}
+    \label{fig:cont_map}
+\end{figure}
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{../plots/plane_map.png}
+    \centering
+	\caption{The largest plane in figure~\ref{fig:cont_map}, hightlighted in yellow.}
+    \label{fig:plane_map}
+\end{figure}
 
-\section{Believability}
-Placement, size, optimal facing direction
+\subsection{Construction}
+In this section we will describe the construction of the house, with regard to its architectural style, and how we addressed believability.
+\subsubsection{Architectural style}
+% TODO reference https://woodmasters.com.ua/wp-content/uploads/2015/01/1392040471-848x480.jpg 20 jun 2023
 
-\section{Variation and adaptability}
-Figures with examples
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{style.jpg}
+    \centering
+	\caption{An example of a Norwegian wood cabin, that I took as inspiration for my Minecraft house.}
+    \label{fig:style}
+\end{figure}
+Describe it, how I implemented it (wood type, veranda)
 
+\subsubsection{Believability}
+Placement: margin, largest area
+Size: as big as fits
+Optimal facing direction from gdpc, secondary based on...
+
+\section{Results: variation and adaptability}
+Figures with examples:
+Plains
+Forest
+Hills
+Jungle
+
+Note window and door placement
 
 \section{Conclusion}
+Just varying size makes the process of building quite complicated already
 
 \end{document}
