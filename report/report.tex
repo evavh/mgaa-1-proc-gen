@@ -6,8 +6,11 @@
 \usepackage[en-GB]{datetime2}
 \usepackage[margin=3.5cm]{geometry}
 \usepackage{graphicx}
+\usepackage{biblatex}
+\addbibresource{bibliography.bib}
 \parindent=0pt
 \frenchspacing
+\raggedright
 
 %%For formatting code, usage: \lstinputlisting{iets.cc}
 %\usepackage{listings}
@@ -26,7 +29,7 @@
 \maketitle
 
 \section{Introduction}
-For this assignment we are studying procedural content generation. We will be automatically generating a house in Minecraft, using the GDPC Python package and the GDMC (Generative Design in Minecraft Challenge) HTTP interface mod. This mod was created for a contest where people procedurally generate settlements in Minecraft, in a specified building area. The challenge here, which we will explore in this assignment as well, is to adapt the generated structures to the world that is given to you, while also varying what is generated. %TODO: references
+For this assignment we are studying procedural content generation. We will be automatically generating a house in Minecraft, using the GDPC Python package \cite{GDPC} and the GDMC (Generative Design in Minecraft Challenge) \cite{GDMC} HTTP interface mod \cite{mod}. This mod was created for a contest where people procedurally generate settlements in Minecraft, in a specified building area. The challenge here, which we will explore in this assignment as well, is to adapt the generated structures to the world that is given to you, while also varying what is generated. %TODO: references
 
 \section{Implementation}
 Our implementation consists of two main parts: finding a suitable part of the given build area to build in, and actually constructing the house.
@@ -55,33 +58,42 @@ The result can be seen in figures~\ref{fig:heightmap},~\ref{fig:cont_map},~and~\
 \begin{figure}
     \includegraphics[width=0.5\textwidth]{../plots/cont_map.png}
     \centering
-	\caption{The heat map of continuous planes, generated from the height map in figure~\ref{fig:heightmap}. The colour scale here does not have a special meaning, but simply numbers all the planes that were found.}
+    \caption{The heat map of continuous planes, generated from the height map in figure~\ref{fig:heightmap}. The colour scale here does not have a special meaning, but simply numbers all the planes that were found.}
     \label{fig:cont_map}
 \end{figure}
 \begin{figure}
     \includegraphics[width=0.5\textwidth]{../plots/plane_map.png}
     \centering
-	\caption{The largest plane in figure~\ref{fig:cont_map}, hightlighted in yellow.}
+    \caption{The largest plane in figure~\ref{fig:cont_map}, hightlighted in yellow.}
     \label{fig:plane_map}
 \end{figure}
 
 \subsection{Construction}
 In this section we will describe the construction of the house, with regard to its architectural style, and how we addressed believability.
 \subsubsection{Architectural style}
+
+I took my inspiration for the architectural style from the image in figure~\ref{fig:style}. It contains a wooden holiday cabin in Norway. I have implemented this style by constructing a simple cabin with a veranda on two sides. I have chosen the spruce log block for the walls, and the spruce planks for the roof, to match the cabin's wood texture and colours. The roof has an overhang over the veranda, and the door is a light colour to represent the light details in the reference house. %TODO check woods
 % TODO reference https://woodmasters.com.ua/wp-content/uploads/2015/01/1392040471-848x480.jpg 20 jun 2023
 
 \begin{figure}
     \includegraphics[width=0.5\textwidth]{style.jpg}
     \centering
-	\caption{An example of a Norwegian wood cabin, that I took as inspiration for my Minecraft house.}
+    \caption{An example of a Norwegian wood cabin, that I took as inspiration for my Minecraft house.}
     \label{fig:style}
 \end{figure}
-Describe it, how I implemented it (wood type, veranda)
 
 \subsubsection{Believability}
-Placement: margin, largest area
-Size: as big as fits
-Optimal facing direction from gdpc, secondary based on...
+To address believability, I have implemented the following qualities:
+\begin{itemize}
+    \item Placement\\
+          The house is placed in the largest continuous flat area. This ensures that no features of the landscape need to be changed. This would be a realistic place to build a real house, since minimal digging would be required to prepare the building site. The construction algorithm also takes into account a small margin of one block on every side of the house, such that no wall is placed directly against the slope of a hill.
+    \item Size\\
+          The house's size is adapted to the amount of space available. The maximum size is 12x10 blocks, since this represents a comfortably large, but not extravagant, cabin. The minimum size is 5x5 blocks for the house itself, to allow room for a door or window on each wall, and 3x3 blocks of indoor space. With the veranda, this comes to 7x7 blocks total.
+    \item Facing direction\\
+          To determine which sides of the house are equipped with a veranda, we use the\\ \texttt{getOptimalFacingDirection} function that GDPC provides. This function yields a ranked list of best, unobstructed directions for a structure to face. Since the function does not always return two top directions (for the two veranda sides), we augment the result with a basic heuristic: people in cold countries, like the Norwegians, always want to sit facing the south, to catch as much sun and warmth as possible. They also like to sit outside in the evening and catch some sun, so the secondary preference would be to face east.
+    \item Window and door placement\\
+          The door is always placed on a welcoming veranda side, with a fence gate and stairs leading to it. The door and windows are also always placed with two blocks of wall on either corner, to make the house make sense on the inside. The windows are always placed symmetrically, and the placement of the door is somewhat randomised.
+\end{itemize}
 
 \section{Results: variation and adaptability}
 Figures with examples:
@@ -94,5 +106,7 @@ Note window and door placement
 
 \section{Conclusion}
 Just varying size makes the process of building quite complicated already
+
+\printbibliography
 
 \end{document}
