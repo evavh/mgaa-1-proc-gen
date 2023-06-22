@@ -29,7 +29,7 @@
 \maketitle
 
 \section{Introduction}
-For this assignment we are studying procedural content generation. We will be automatically generating a house in Minecraft, using the GDPC Python package \cite{GDPC} and the GDMC (Generative Design in Minecraft Challenge) \cite{GDMC} HTTP interface mod \cite{mod}. This mod was created for a contest where people procedurally generate settlements in Minecraft, in a specified building area. The challenge here, which we will explore in this assignment as well, is to adapt the generated structures to the world that is given to you, while also varying what is generated. %TODO: references
+For this assignment we are studying procedural content generation. We will be automatically generating a house in Minecraft, using the GDPC Python package \cite{GDPC} and the GDMC (Generative Design in Minecraft Challenge) \cite{GDMC} HTTP interface mod \cite{mod}. This mod was created for a contest where people procedurally generate settlements in Minecraft, in a specified building area. The challenge here, which we will explore in this assignment as well, is to adapt the generated structures to the world that is given to you, while also varying what is generated.
 
 \section{Implementation}
 Our implementation consists of two main parts: finding a suitable part of the given build area to build in, and actually constructing the house.
@@ -69,7 +69,7 @@ The result can be seen in figures~\ref{fig:heightmap},~\ref{fig:cont_map},~and~\
 \end{figure}
 
 \subsection{Construction}
-In this section we will describe the construction of the house, with regard to its architectural style, and how we addressed believability.
+In this section we will describe the construction of the house, with regard to its architectural style, how we addressed believability, and how we executed the actual building.
 \subsubsection{Architectural style}
 
 I took my inspiration for the architectural style from the image in figure~\ref{fig:style}. It contains a wooden holiday cabin in Norway. I have implemented this style by constructing a simple cabin with a veranda on two sides. I have chosen the spruce log block for the walls, and the spruce planks for the roof, to match the cabin's wood texture and colours. The roof has an overhang over the veranda, and the door is a light colour to represent the light details in the reference house. %TODO check woods
@@ -95,14 +95,34 @@ To address believability, I have implemented the following qualities:
           The door is always placed on a welcoming veranda side, with a fence gate and stairs leading to it. The door and windows are also always placed with two blocks of wall on either corner, to make the house make sense on the inside. The windows are always placed symmetrically, and the placement of the door is somewhat randomised.
 \end{itemize}
 
+\subsubsection{Constructing}
+%TODO
+
 \section{Results: variation and adaptability}
 Figures with examples:
-Plains
-Forest
-Hills
-Jungle
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{../screenshots/plains.png}
+    \centering
+    \caption{Plains}
+    \label{fig:plains}
+\end{figure}
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{../screenshots/forest.png}
+    \centering
+	\caption{(Flower) forest}
+    \label{fig:forest}
+\end{figure}
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{../screenshots/hills.png}
+    \centering
+	\caption{(Snowy) hills}
+    \label{fig:hills}
+\end{figure}
 
 Note window and door placement
+
+\subsection{Limitations}
+Jungle doesn't work
 
 \section{Conclusion}
 Just varying size makes the process of building quite complicated already

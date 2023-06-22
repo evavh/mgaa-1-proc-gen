@@ -338,6 +338,9 @@ def build_house(editor: Editor, build_area, largest_plane, y_floor):
     size = (IDEAL_SIZE[0] + 1, IDEAL_SIZE[1])
 
     while main_rect is None:
+        if size[0] < 7 or size[1] < 7:
+            print("No suitable area found")
+            exit(1)
         size, last_dim_decreased = decrease_size(size, last_dim_decreased)
         print(f"Trying to find fitting {size} rectangle")
         main_rect = rectangle_gen.choose_rectangle(largest_plane, size, MARGIN)
